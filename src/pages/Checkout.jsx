@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -16,31 +16,51 @@ const Checkout = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
   const [placing, setPlacing] = useState(false);
+  const [showWakeupHint, setShowWakeupHint] = useState(false);
+  const wakeupTimer = useRef(null);
 
   const totalPrice = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  const saveOrder = async (paymentId) => {
-    const saveOrderRes = await fetch(`${API_BASE_URL}/api/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${user.token}`
-      },
-      body: JSON.stringify({
-        products: cartItems,
-        totalAmount: totalPrice,
-        address,
-        paymentId
-      })
-    });
-
-    if (saveOrderRes.ok) {
-  dispatch(clearCart());
-  navigate('/ordersuccess', { state: { method: paymentMethod } });
+  // Show a "server waking up" hint if placing an order takes more than 5 seconds
+  useEffect(() => {
+    if (placing) {
+      wakeupTimer.current = setTimeout(() => setShowWakeupHint(true), 5000);
     } else {
-      alert('Order saving failed');
+      clearTimeout(wakeupTimer.current);
+      setShowWakeupHint(false);
     }
-    setPlacing(false);
+    return () => clearTimeout(wakeupTimer.current);
+  }, [placing]);
+
+  const saveOrder = async (paymentId) => {
+    try {
+      const saveOrderRes = await fetch(`${API_BASE_URL}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          products: cartItems,
+          totalAmount: totalPrice,
+          address,
+          paymentId
+        })
+      });
+
+      if (saveOrderRes.ok) {
+        dispatch(clearCart());
+        navigate('/ordersuccess', { state: { method: paymentMethod } });
+      } else {
+        const data = await saveOrderRes.json().catch(() => ({}));
+        alert(data.message || 'Order saving failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Order save error:', error);
+      alert('Could not reach the server. The backend may be waking up (this can take up to a minute on the free tier) — please wait a moment and try again.');
+    } finally {
+      setPlacing(false);
+    }
   };
 
   const handleRazorpayPayment = async () => {
@@ -158,6 +178,11 @@ const Checkout = () => {
             <button type="submit" className="btn" disabled={placing}>
               {placing ? 'Placing Order...' : paymentMethod === 'cod' ? 'Place Order' : 'Pay Now'}
             </button>
+            {showWakeupHint && (
+              <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#a1a1aa' }}>
+                Waking up the server — this can take up to a minute on first request. Please wait...
+              </p>
+            )}
           </div>
         </form>
       </div>
