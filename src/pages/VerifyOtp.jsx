@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const VerifyOtp = () => {
   const location = useLocation();
@@ -25,7 +26,7 @@ const VerifyOtp = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/verify-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),
@@ -50,7 +51,7 @@ const VerifyOtp = () => {
     setMessage('');
     setResending(true);
     try {
-      const res = await fetch('/api/auth/resend-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

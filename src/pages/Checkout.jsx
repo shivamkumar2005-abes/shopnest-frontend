@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { clearCart } from '../redux/cartSlice';
+import { API_BASE_URL } from '../config/api';
 
 const Checkout = () => {
   const { user } = useContext(AuthContext);
@@ -19,7 +20,7 @@ const Checkout = () => {
   const totalPrice = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
 
   const saveOrder = async (paymentId) => {
-    const saveOrderRes = await fetch('/api/orders', {
+    const saveOrderRes = await fetch(`${API_BASE_URL}/api/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +45,7 @@ const Checkout = () => {
 
   const handleRazorpayPayment = async () => {
     try {
-      const orderRes = await fetch('/api/payment/order', {
+      const orderRes = await fetch(`${API_BASE_URL}/api/payment/order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: totalPrice })
@@ -65,7 +66,7 @@ const Checkout = () => {
         description: 'Order Payment',
         order_id: orderData.id,
         handler: async function (response) {
-          const verifyRes = await fetch('/api/payment/verify', {
+          const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(response)

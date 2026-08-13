@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from '../components/ProductCard';
+import { API_BASE_URL } from '../config/api';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -8,7 +9,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/products');
+        const res = await fetch(`${API_BASE_URL}/api/products`);
         const data = await res.json();
         const sorted = [...data].sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
