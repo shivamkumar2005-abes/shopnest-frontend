@@ -24,8 +24,6 @@ const Login = () => {
       if (res.ok) {
         login(data);
         navigate('/');
-      } else if (res.status === 403) {
-        navigate('/verify-otp', { state: { email } });
       } else {
         setError(data.message);
       }
